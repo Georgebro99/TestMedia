@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ripple — Social, For Real</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">◉</span>
+        <div>
+          <h1>Ripple</h1>
+          <p>Stay close to what matters</p>
+        </div>
+      </div>
+      <button id="authToggle" class="btn ghost">Sign in</button>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar-left card">
+        <section>
+          <h2>Navigation</h2>
+          <ul class="nav-list">
+            <li class="active">Home</li>
+            <li>Explore</li>
+            <li>Messages</li>
+            <li>Bookmarks</li>
+            <li>Profile</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Profile</h2>
+          <div id="profileCard" class="profile-card"></div>
+        </section>
+      </aside>
+
+      <section class="feed-column">
+        <article class="composer card">
+          <h2>Create post</h2>
+          <form id="postForm">
+            <textarea
+              id="postText"
+              placeholder="Share something with your network..."
+              maxlength="280"
+              required
+            ></textarea>
+            <div class="composer-row">
+              <input
+                id="imageUrl"
+                type="url"
+                placeholder="Optional image URL"
+              />
+              <div class="composer-actions">
+                <span id="charCount">0 / 280</span>
+                <button class="btn" type="submit">Post</button>
+              </div>
+            </div>
+          </form>
+        </article>
+
+        <section id="feed" class="feed"></section>
+      </section>
+
+      <aside class="sidebar-right card">
+        <section>
+          <h2>Trending now</h2>
+          <ul id="trendingList" class="trend-list"></ul>
+        </section>
+        <section>
+          <h2>Who to follow</h2>
+          <ul id="suggestionList" class="suggest-list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <dialog id="authDialog">
+      <form method="dialog" id="authForm" class="auth-form card">
+        <h2>Welcome to Ripple</h2>
+        <label>
+          Display name
+          <input id="displayName" type="text" minlength="2" maxlength="24" required />
+        </label>
+        <label>
+          Username
+          <input id="username" type="text" pattern="[a-zA-Z0-9_]{3,15}" required />
+        </label>
+        <label>
+          Bio
+          <textarea id="bio" maxlength="120" placeholder="What do you care about?"></textarea>
+        </label>
+        <div class="auth-actions">
+          <button class="btn ghost" value="cancel">Cancel</button>
+          <button class="btn" value="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="postTemplate">
+      <article class="post card">
+        <header>
+          <div>
+            <h3 class="post-name"></h3>
+            <p class="post-handle"></p>
+          </div>
+          <time class="post-time"></time>
+        </header>
+        <p class="post-text"></p>
+        <img class="post-image" alt="Post media" />
+        <footer>
+          <button data-action="like">♡ <span>0</span></button>
+          <button data-action="repost">↻ <span>0</span></button>
+          <button data-action="bookmark">🔖 <span>0</span></button>
+          <button data-action="comment">💬 <span>0</span></button>
+        </footer>
+        <form class="comment-form hidden">
+          <input type="text" maxlength="140" placeholder="Write a reply..." />
+          <button class="btn" type="submit">Reply</button>
+        </form>
+        <ul class="comment-list"></ul>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
