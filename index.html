@@ -12,7 +12,7 @@
         <span class="logo">◉</span>
         <div>
           <h1>Ripple</h1>
-          <p>Stay close to what matters</p>
+          <p id="viewSubtitle">Home feed</p>
         </div>
       </div>
       <button id="authToggle" class="btn ghost">Sign in</button>
@@ -25,28 +25,23 @@
           <ul class="nav-list" id="navList">
             <li class="active" data-tab="home">Home</li>
             <li data-tab="explore">Explore</li>
+            <li data-tab="activity">Activity</li>
             <li data-tab="messages">Messages</li>
-            <li data-tab="bookmarks">Bookmarks</li>
             <li data-tab="profile">Profile</li>
           </ul>
         </section>
         <section>
-          <h2>Profile</h2>
+          <h2>Current profile</h2>
           <div id="profileCard" class="profile-card"></div>
         </section>
       </aside>
 
-      <section class="feed-column">
+      <section class="feed-column" id="screenRoot">
         <section id="homePanel" class="tab-panel active-panel">
           <article class="composer card">
             <h2>Create post</h2>
             <form id="postForm">
-              <textarea
-                id="postText"
-                placeholder="Share something with your network..."
-                maxlength="280"
-                required
-              ></textarea>
+              <textarea id="postText" placeholder="Share something with your network..." maxlength="280" required></textarea>
               <div class="composer-row">
                 <input id="imageUrl" type="url" placeholder="Optional image URL" />
                 <div class="composer-actions">
@@ -60,18 +55,17 @@
         </section>
 
         <section id="explorePanel" class="tab-panel card panel-card">
-          <div class="panel-header">
-            <h2>Explore</h2>
-            <p>Most active posts from your network</p>
-          </div>
-          <section id="exploreFeed" class="feed"></section>
+          <div class="panel-header"><h2>Explore</h2><p>Discover creators and popular media</p></div>
+          <section id="exploreGrid" class="explore-grid"></section>
+        </section>
+
+        <section id="activityPanel" class="tab-panel card panel-card">
+          <div class="panel-header"><h2>Activity</h2><p>Recent activity around your account</p></div>
+          <ul id="activityList" class="activity-list"></ul>
         </section>
 
         <section id="messagesPanel" class="tab-panel card panel-card">
-          <div class="panel-header">
-            <h2>Messages</h2>
-            <p>Direct messages are local to this browser</p>
-          </div>
+          <div class="panel-header"><h2>Messages</h2><p>Direct messages are local to this browser</p></div>
           <section id="messagesThread" class="messages-thread"></section>
           <form id="messageForm" class="message-form">
             <input id="messageInput" maxlength="180" placeholder="Type a message..." required />
@@ -79,21 +73,9 @@
           </form>
         </section>
 
-        <section id="bookmarksPanel" class="tab-panel card panel-card">
-          <div class="panel-header">
-            <h2>Bookmarks</h2>
-            <p>Saved posts for later</p>
-          </div>
-          <section id="bookmarksFeed" class="feed"></section>
-        </section>
-
         <section id="profilePanel" class="tab-panel card panel-card">
-          <div class="panel-header">
-            <h2>Your profile</h2>
-            <p>Public information and your recent activity</p>
-          </div>
-          <div id="profileSummary" class="profile-summary"></div>
-          <h3>Your recent posts</h3>
+          <div id="profileHeader" class="profile-header"></div>
+          <h3>Posts</h3>
           <section id="profileFeed" class="feed"></section>
         </section>
       </section>
@@ -113,18 +95,9 @@
     <dialog id="authDialog">
       <form method="dialog" id="authForm" class="auth-form card">
         <h2>Welcome to Ripple</h2>
-        <label>
-          Display name
-          <input id="displayName" type="text" minlength="2" maxlength="24" required />
-        </label>
-        <label>
-          Username
-          <input id="username" type="text" pattern="[a-zA-Z0-9_]{3,15}" required />
-        </label>
-        <label>
-          Bio
-          <textarea id="bio" maxlength="120" placeholder="What do you care about?"></textarea>
-        </label>
+        <label>Display name<input id="displayName" type="text" minlength="2" maxlength="24" required /></label>
+        <label>Username<input id="username" type="text" pattern="[a-zA-Z0-9_]{3,15}" required /></label>
+        <label>Bio<textarea id="bio" maxlength="120" placeholder="What do you care about?"></textarea></label>
         <div class="auth-actions">
           <button class="btn ghost" value="cancel">Cancel</button>
           <button class="btn" value="submit">Save</button>
@@ -135,10 +108,10 @@
     <template id="postTemplate">
       <article class="post card post-enter">
         <header>
-          <div>
+          <button class="profile-link post-name-btn" data-action="open-profile">
             <h3 class="post-name"></h3>
             <p class="post-handle"></p>
-          </div>
+          </button>
           <time class="post-time"></time>
         </header>
         <p class="post-text"></p>
@@ -157,8 +130,15 @@
       </article>
     </template>
 
-    <div id="toast" class="toast"></div>
+    <dialog id="mediaDialog" class="media-dialog">
+      <article class="media-card">
+        <img id="mediaPreview" alt="Selected post media" />
+        <p id="mediaCaption"></p>
+        <button class="btn" id="closeMedia">Close</button>
+      </article>
+    </dialog>
 
+    <div id="toast" class="toast"></div>
     <script src="app.js"></script>
   </body>
 </html>

@@ -4,16 +4,15 @@ Ripple is a realistic social-media prototype built with plain HTML, CSS, and Jav
 
 ## Features
 
-- Multi-tab experience: Home, Explore, Messages, Bookmarks, Profile
-- Timeline feed with seeded posts and user-created posts
-- Reactions: like, repost, bookmark, and per-post comments
-- Profile editor (display name, username, bio) with profile stats panel
-- Explore tab showing popular posts
-- Bookmarks tab showing saved posts only
-- Messages tab with local thread + quick simulated replies
-- Trending hashtags and follow suggestions sidebar
-- Live-feel UI touches: subtle animations and toast feedback
-- Local persistence via `localStorage`
+- Distinct app screens: Home, Explore, Activity, Messages, and Profile
+- Clickable profile names that open actual profile views with posts
+- Timeline with post creation, comments, likes, reposts, and bookmarks
+- Explore grid for media discovery with modal preview
+- Activity feed showing your recent post/interactions
+- Follow suggestions and follow actions
+- Messaging thread with local persistence and quick simulated replies
+- Interaction polish: animated reactions, screen transitions, and toast feedback
+- Persistent single-user state via `localStorage`
 
 ## Run
 
