@@ -22,12 +22,12 @@
       <aside class="sidebar-left card">
         <section>
           <h2>Navigation</h2>
-          <ul class="nav-list">
-            <li class="active">Home</li>
-            <li>Explore</li>
-            <li>Messages</li>
-            <li>Bookmarks</li>
-            <li>Profile</li>
+          <ul class="nav-list" id="navList">
+            <li class="active" data-tab="home">Home</li>
+            <li data-tab="explore">Explore</li>
+            <li data-tab="messages">Messages</li>
+            <li data-tab="bookmarks">Bookmarks</li>
+            <li data-tab="profile">Profile</li>
           </ul>
         </section>
         <section>
@@ -37,30 +37,65 @@
       </aside>
 
       <section class="feed-column">
-        <article class="composer card">
-          <h2>Create post</h2>
-          <form id="postForm">
-            <textarea
-              id="postText"
-              placeholder="Share something with your network..."
-              maxlength="280"
-              required
-            ></textarea>
-            <div class="composer-row">
-              <input
-                id="imageUrl"
-                type="url"
-                placeholder="Optional image URL"
-              />
-              <div class="composer-actions">
-                <span id="charCount">0 / 280</span>
-                <button class="btn" type="submit">Post</button>
+        <section id="homePanel" class="tab-panel active-panel">
+          <article class="composer card">
+            <h2>Create post</h2>
+            <form id="postForm">
+              <textarea
+                id="postText"
+                placeholder="Share something with your network..."
+                maxlength="280"
+                required
+              ></textarea>
+              <div class="composer-row">
+                <input id="imageUrl" type="url" placeholder="Optional image URL" />
+                <div class="composer-actions">
+                  <span id="charCount">0 / 280</span>
+                  <button class="btn" type="submit">Post</button>
+                </div>
               </div>
-            </div>
-          </form>
-        </article>
+            </form>
+          </article>
+          <section id="feed" class="feed"></section>
+        </section>
 
-        <section id="feed" class="feed"></section>
+        <section id="explorePanel" class="tab-panel card panel-card">
+          <div class="panel-header">
+            <h2>Explore</h2>
+            <p>Most active posts from your network</p>
+          </div>
+          <section id="exploreFeed" class="feed"></section>
+        </section>
+
+        <section id="messagesPanel" class="tab-panel card panel-card">
+          <div class="panel-header">
+            <h2>Messages</h2>
+            <p>Direct messages are local to this browser</p>
+          </div>
+          <section id="messagesThread" class="messages-thread"></section>
+          <form id="messageForm" class="message-form">
+            <input id="messageInput" maxlength="180" placeholder="Type a message..." required />
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </section>
+
+        <section id="bookmarksPanel" class="tab-panel card panel-card">
+          <div class="panel-header">
+            <h2>Bookmarks</h2>
+            <p>Saved posts for later</p>
+          </div>
+          <section id="bookmarksFeed" class="feed"></section>
+        </section>
+
+        <section id="profilePanel" class="tab-panel card panel-card">
+          <div class="panel-header">
+            <h2>Your profile</h2>
+            <p>Public information and your recent activity</p>
+          </div>
+          <div id="profileSummary" class="profile-summary"></div>
+          <h3>Your recent posts</h3>
+          <section id="profileFeed" class="feed"></section>
+        </section>
       </section>
 
       <aside class="sidebar-right card">
@@ -98,7 +133,7 @@
     </dialog>
 
     <template id="postTemplate">
-      <article class="post card">
+      <article class="post card post-enter">
         <header>
           <div>
             <h3 class="post-name"></h3>
@@ -121,6 +156,8 @@
         <ul class="comment-list"></ul>
       </article>
     </template>
+
+    <div id="toast" class="toast"></div>
 
     <script src="app.js"></script>
   </body>
