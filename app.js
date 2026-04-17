@@ -1,9 +1,10 @@
-const STORAGE_KEY = "ripplegram-v2";
+const STORAGE_KEY = "ripplegram-v3";
 
 const directory = {
   alexm: { name: "Alex Moore", handle: "alexm", bio: "Street photos + coffee.", avatar: "A" },
   linafit: { name: "Lina Park", handle: "linafit", bio: "Training + routines.", avatar: "L" },
   devsam: { name: "Sam Reed", handle: "devsam", bio: "Building in public.", avatar: "S" },
+  mayaart: { name: "Maya Ortiz", handle: "mayaart", bio: "Color studies and city sketches.", avatar: "M" },
 };
 
 const seededPosts = [
@@ -40,9 +41,9 @@ const seededPosts = [
 ];
 
 let state = loadState();
-let currentView = "home";
 let currentThread = Object.keys(state.messages)[0] || "alexm";
 let viewingProfile = state.user.handle;
+let activeConnectionsMode = "followers";
 
 const postTemplate = document.getElementById("postTemplate");
 const mainNav = document.getElementById("mainNav");
@@ -59,6 +60,8 @@ const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 const miniProfile = document.getElementById("miniProfile");
 const suggestions = document.getElementById("suggestions");
+const activeHandle = document.getElementById("activeHandle");
+
 const createDialog = document.getElementById("createDialog");
 const createForm = document.getElementById("createForm");
 const createText = document.getElementById("createText");
@@ -69,7 +72,22 @@ const profileForm = document.getElementById("profileForm");
 const profileNameInput = document.getElementById("profileNameInput");
 const profileHandleInput = document.getElementById("profileHandleInput");
 const profileBioInput = document.getElementById("profileBioInput");
-const editProfileBtn = document.getElementById("editProfileBtn");
+
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsDialog = document.getElementById("settingsDialog");
+const settingsForm = document.getElementById("settingsForm");
+const setDarkMode = document.getElementById("setDarkMode");
+const setCompact = document.getElementById("setCompact");
+const setStatus = document.getElementById("setStatus");
+const setAutoplay = document.getElementById("setAutoplay");
+const setPrivate = document.getElementById("setPrivate");
+const setAccent = document.getElementById("setAccent");
+
+const connectionsDialog = document.getElementById("connectionsDialog");
+const connectionsTitle = document.getElementById("connectionsTitle");
+const connectionsList = document.getElementById("connectionsList");
+const connectionsClose = document.getElementById("connectionsClose");
+
 const toast = document.getElementById("toast");
 
 function loadState() {
@@ -77,16 +95,26 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
+
   return {
     user: { name: "Jordan Lake", handle: "jordanlake", bio: "Daily life and small wins.", avatar: "J" },
     posts: seededPosts,
     interactions: {},
     follows: ["alexm", "linafit"],
+    followers: ["mayaart", "devsam"],
     messages: {
       alexm: [
         { fromMe: false, text: "New post soon." },
         { fromMe: true, text: "Ready when you are." },
       ],
+    },
+    settings: {
+      darkMode: false,
+      compactFeed: false,
+      showStatus: true,
+      autoplayReels: true,
+      privateAccount: false,
+      accent: "blue",
     },
   };
 }
@@ -116,8 +144,22 @@ function showToast(text) {
   showToast.timer = setTimeout(() => toast.classList.remove("show"), 1200);
 }
 
+function applySettings() {
+  document.body.classList.toggle("theme-dark", state.settings.darkMode);
+  document.body.classList.toggle("compact", state.settings.compactFeed);
+  document.body.classList.toggle("accent-pink", state.settings.accent === "pink");
+  document.body.classList.toggle("accent-green", state.settings.accent === "green");
+  document.body.classList.toggle("accent-blue", state.settings.accent === "blue");
+
+  setDarkMode.checked = state.settings.darkMode;
+  setCompact.checked = state.settings.compactFeed;
+  setStatus.checked = state.settings.showStatus;
+  setAutoplay.checked = state.settings.autoplayReels;
+  setPrivate.checked = state.settings.privateAccount;
+  setAccent.value = state.settings.accent;
+}
+
 function switchView(view) {
-  currentView = view;
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active-view"));
   document.getElementById(`${view}View`).classList.add("active-view");
   document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => btn.classList.remove("active"));
@@ -125,8 +167,8 @@ function switchView(view) {
 }
 
 function renderStories() {
-  const items = [state.user.handle, ...state.follows];
-  storiesEl.innerHTML = items
+  const people = [state.user.handle, ...state.follows];
+  storiesEl.innerHTML = people
     .map((handle) => {
       const u = getUser(handle);
       return `<button class='story' data-profile='${u.handle}'><div class='avatar'>${u.avatar}</div><small>${u.handle}</small></button>`;
@@ -147,18 +189,19 @@ function fillPostNode(node, post) {
   const img = node.querySelector(".post-image");
   img.src = post.image;
   img.addEventListener("dblclick", () => {
-    toggle(post, "like", node.querySelector('[data-action="like"]'));
+    togglePostAction(post, "like", node.querySelector('[data-action="like"]'));
     refreshCore();
   });
 
   const counts = { like: post.likes, comment: post.comments.length, bookmark: post.bookmarks };
-  Object.entries(counts).forEach(([k, v]) => {
-    const btn = node.querySelector(`[data-action='${k}']`);
-    btn.querySelector("span").textContent = v;
-    if (state.interactions[post.id]?.includes(k)) btn.classList.add("active");
+  Object.entries(counts).forEach(([name, count]) => {
+    const btn = node.querySelector(`[data-action='${name}']`);
+    btn.querySelector("span").textContent = count;
+    if (state.interactions[post.id]?.includes(name)) btn.classList.add("active");
   });
 
   const comments = node.querySelector(".comments");
+  comments.innerHTML = "";
   post.comments.forEach((c) => {
     const li = document.createElement("li");
     li.innerHTML = `<strong>${c.by}</strong> ${c.text}`;
@@ -196,24 +239,28 @@ function renderReels() {
     .slice()
     .sort((a, b) => score(b) - score(a))
     .slice(0, 6)
-    .map((p) => `<article class='reel'><img src='${p.image}' alt='Reel' /><div class='overlay'><strong>@${p.author}</strong><p>${p.caption}</p></div></article>`)
+    .map((p) => `<article class='reel'><img src='${p.image}' alt='Reel' loading='lazy' /><div class='overlay'><strong>@${p.author}</strong><p>${p.caption}</p></div></article>`)
     .join("");
 }
 
 function renderProfile() {
-  const user = getUser(viewingProfile);
-  const posts = state.posts.filter((p) => p.author === user.handle);
-  const isMe = user.handle === state.user.handle;
-  const following = state.follows.includes(user.handle);
+  const u = getUser(viewingProfile);
+  const posts = state.posts.filter((p) => p.author === u.handle);
+  const isMe = u.handle === state.user.handle;
+  const following = state.follows.includes(u.handle);
 
   profileHeader.innerHTML = `
-    <div class='avatar big'>${user.avatar}</div>
+    <div class='avatar big'>${u.avatar}</div>
     <div>
-      <h2>${user.name}</h2>
-      <p>@${user.handle}</p>
-      <p>${user.bio || "No bio."}</p>
-      <div class='stats'><span><strong>${posts.length}</strong> posts</span><span><strong>${state.follows.length}</strong> following</span></div>
-      ${isMe ? "" : `<button class='primary' id='followProfileBtn'>${following ? "Following" : "Follow"}</button>`}
+      <h2>${u.name}</h2>
+      <p>@${u.handle}${state.settings.showStatus ? " · active now" : ""}</p>
+      <p>${u.bio || "No bio."}</p>
+      <div class='stats'>
+        <span><strong>${posts.length}</strong> posts</span>
+        <button class='link-stat' data-open-connections='followers'><strong>${state.followers.length}</strong> followers</button>
+        <button class='link-stat' data-open-connections='following'><strong>${state.follows.length}</strong> following</button>
+      </div>
+      ${isMe ? `<button class='ghost' id='openProfileEdit'>Edit profile</button>` : `<button class='primary' id='followProfileBtn'>${following ? "Following" : "Follow"}</button>`}
     </div>
   `;
 
@@ -225,10 +272,10 @@ function renderMessages() {
   if (!handles.includes(currentThread)) currentThread = handles[0] || "alexm";
 
   threadList.innerHTML = handles
-    .map((h) => {
-      const u = getUser(h);
-      const cls = h === currentThread ? "thread active" : "thread";
-      return `<button class='${cls}' data-thread='${h}'><div class='avatar tiny'>${u.avatar}</div><span>${u.name}</span></button>`;
+    .map((handle) => {
+      const u = getUser(handle);
+      const cls = handle === currentThread ? "thread active" : "thread";
+      return `<button class='${cls}' data-thread='${handle}'><div class='avatar tiny'>${u.avatar}</div><span>${u.name}</span></button>`;
     })
     .join("");
 
@@ -238,6 +285,7 @@ function renderMessages() {
 }
 
 function renderRail() {
+  activeHandle.textContent = state.user.handle;
   miniProfile.innerHTML = `<div class='avatar'>${state.user.avatar}</div><div><strong>${state.user.name}</strong><small>@${state.user.handle}</small></div>`;
   suggestions.innerHTML = Object.values(directory)
     .filter((u) => u.handle !== state.user.handle && !state.follows.includes(u.handle))
@@ -245,9 +293,24 @@ function renderRail() {
     .join("");
 }
 
+function renderConnectionsDialog() {
+  const list = activeConnectionsMode === "followers" ? state.followers : state.follows;
+  connectionsTitle.textContent = activeConnectionsMode === "followers" ? "Followers" : "Following";
+  connectionsList.innerHTML = list
+    .map((handle) => {
+      const u = getUser(handle);
+      return `<li><div class='avatar tiny'>${u.avatar}</div><div><strong>${u.name}</strong><small>@${u.handle}</small></div></li>`;
+    })
+    .join("");
+
+  if (!list.length) {
+    connectionsList.innerHTML = "<li><small>No accounts yet.</small></li>";
+  }
+}
+
 function refreshCore() {
-  const top = window.scrollY;
   persist();
+  applySettings();
   renderStories();
   renderFeed();
   renderSearch(searchInput.value);
@@ -255,16 +318,15 @@ function refreshCore() {
   renderProfile();
   renderMessages();
   renderRail();
-  window.scrollTo({ top, behavior: "instant" });
 }
 
-function toggle(post, type, btn) {
+function togglePostAction(post, type, button) {
   state.interactions[post.id] = state.interactions[post.id] || [];
   const had = state.interactions[post.id].includes(type);
-  const d = had ? -1 : 1;
+  const delta = had ? -1 : 1;
 
-  if (type === "like") post.likes += d;
-  if (type === "bookmark") post.bookmarks += d;
+  if (type === "like") post.likes += delta;
+  if (type === "bookmark") post.bookmarks += delta;
 
   if (had) {
     state.interactions[post.id] = state.interactions[post.id].filter((x) => x !== type);
@@ -272,20 +334,20 @@ function toggle(post, type, btn) {
     state.interactions[post.id].push(type);
   }
 
-  btn?.classList.add("pulse");
-  setTimeout(() => btn?.classList.remove("pulse"), 280);
+  button?.classList.add("pulse");
+  setTimeout(() => button?.classList.remove("pulse"), 280);
 }
 
 mainNav.addEventListener("click", (event) => {
   const nav = event.target.closest("[data-view]");
-  if (nav) {
-    if (nav.dataset.view === "profile") viewingProfile = state.user.handle;
-    switchView(nav.dataset.view);
-    return;
-  }
-
-  if (event.target.closest("#newPostBtn")) createDialog.showModal();
+  if (!nav) return;
+  if (nav.dataset.view === "profile") viewingProfile = state.user.handle;
+  switchView(nav.dataset.view);
 });
+
+newPostBtn.addEventListener("click", () => createDialog.showModal());
+settingsBtn.addEventListener("click", () => settingsDialog.showModal());
+connectionsClose.addEventListener("click", () => connectionsDialog.close());
 
 feedEl.addEventListener("click", (event) => {
   const postEl = event.target.closest(".post");
@@ -297,7 +359,8 @@ feedEl.addEventListener("click", (event) => {
       postEl.querySelector(".comment-form").classList.toggle("hidden");
       return;
     }
-    toggle(post, action, event.target.closest("[data-action]"));
+
+    togglePostAction(post, action, event.target.closest("[data-action]"));
     refreshCore();
     showToast(`${action} updated`);
     return;
@@ -316,10 +379,13 @@ feedEl.addEventListener("submit", (event) => {
 
   const form = event.target;
   const post = state.posts.find((p) => p.id === form.closest(".post")?.dataset.postId);
-  const text = form.querySelector("input").value.trim();
+  const input = form.querySelector("input");
+  const text = input.value.trim();
   if (!post || !text) return;
 
   post.comments.push({ id: crypto.randomUUID(), by: `@${state.user.handle}`, text });
+  input.value = "";
+  form.classList.add("hidden");
   refreshCore();
   showToast("Comment posted");
 });
@@ -372,12 +438,12 @@ chatForm.addEventListener("submit", (event) => {
 suggestions.addEventListener("click", (event) => {
   const btn = event.target.closest("[data-follow]");
   if (!btn) return;
-  state.follows.push(btn.dataset.follow);
+  const handle = btn.dataset.follow;
+  if (!state.follows.includes(handle)) state.follows.push(handle);
+  if (!state.messages[handle]) state.messages[handle] = [{ fromMe: false, text: "Hey, thanks for the follow!" }];
   refreshCore();
-  showToast(`Following @${btn.dataset.follow}`);
+  showToast(`Following @${handle}`);
 });
-
-newPostBtn.addEventListener("click", () => createDialog.showModal());
 
 createForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -402,13 +468,6 @@ createForm.addEventListener("submit", (event) => {
   showToast("Post shared");
 });
 
-editProfileBtn.addEventListener("click", () => {
-  profileNameInput.value = state.user.name;
-  profileHandleInput.value = state.user.handle;
-  profileBioInput.value = state.user.bio;
-  profileDialog.showModal();
-});
-
 profileForm.addEventListener("submit", (event) => {
   event.preventDefault();
   state.user = {
@@ -423,11 +482,44 @@ profileForm.addEventListener("submit", (event) => {
   showToast("Profile saved");
 });
 
-document.addEventListener("click", (event) => {
-  const btn = event.target.closest("#followProfileBtn");
-  if (!btn || state.follows.includes(viewingProfile)) return;
-  state.follows.push(viewingProfile);
+settingsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.settings = {
+    darkMode: setDarkMode.checked,
+    compactFeed: setCompact.checked,
+    showStatus: setStatus.checked,
+    autoplayReels: setAutoplay.checked,
+    privateAccount: setPrivate.checked,
+    accent: setAccent.value,
+  };
+
+  settingsDialog.close();
   refreshCore();
+  showToast("Settings updated");
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target.closest("#openProfileEdit")) {
+    profileNameInput.value = state.user.name;
+    profileHandleInput.value = state.user.handle;
+    profileBioInput.value = state.user.bio;
+    profileDialog.showModal();
+    return;
+  }
+
+  const followBtn = event.target.closest("#followProfileBtn");
+  if (followBtn && !state.follows.includes(viewingProfile)) {
+    state.follows.push(viewingProfile);
+    refreshCore();
+    return;
+  }
+
+  const statBtn = event.target.closest("[data-open-connections]");
+  if (statBtn) {
+    activeConnectionsMode = statBtn.dataset.openConnections;
+    renderConnectionsDialog();
+    connectionsDialog.showModal();
+  }
 });
 
 refreshCore();

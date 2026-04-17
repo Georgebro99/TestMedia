@@ -16,12 +16,16 @@
           <button class="nav-btn" data-view="reels"><span>Reels</span></button>
           <button class="nav-btn" data-view="messages"><span>Messages</span></button>
           <button class="nav-btn" data-view="profile"><span>Profile</span></button>
-          <button class="nav-btn" id="newPostBtn"><span>Create</span></button>
         </nav>
-        <button id="editProfileBtn" class="ghost full">Edit profile</button>
       </aside>
 
       <main class="content">
+        <header class="top-actions">
+          <button id="newPostBtn" class="icon-btn" title="Create">＋</button>
+          <div class="top-brand">@<span id="activeHandle">jordanlake</span></div>
+          <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
+        </header>
+
         <section id="homeView" class="view active-view">
           <div id="stories" class="stories"></div>
           <section id="feed" class="feed"></section>
@@ -87,6 +91,38 @@
         <div class="dialog-actions">
           <button class="ghost" value="cancel">Cancel</button>
           <button class="primary" value="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="connectionsDialog">
+      <article class="dialog-card">
+        <h2 id="connectionsTitle">Connections</h2>
+        <ul id="connectionsList" class="connections-list"></ul>
+        <div class="dialog-actions">
+          <button id="connectionsClose" class="primary">Done</button>
+        </div>
+      </article>
+    </dialog>
+
+    <dialog id="settingsDialog">
+      <form id="settingsForm" class="dialog-card" method="dialog">
+        <h2>Settings</h2>
+        <label class="setting"><span>Dark mode</span><input id="setDarkMode" type="checkbox" /></label>
+        <label class="setting"><span>Compact feed</span><input id="setCompact" type="checkbox" /></label>
+        <label class="setting"><span>Show activity status</span><input id="setStatus" type="checkbox" /></label>
+        <label class="setting"><span>Autoplay reels</span><input id="setAutoplay" type="checkbox" /></label>
+        <label class="setting"><span>Private account</span><input id="setPrivate" type="checkbox" /></label>
+        <label class="setting"><span>Accent style</span>
+          <select id="setAccent">
+            <option value="blue">Blue</option>
+            <option value="pink">Pink</option>
+            <option value="green">Green</option>
+          </select>
+        </label>
+        <div class="dialog-actions">
+          <button class="ghost" value="cancel">Cancel</button>
+          <button class="primary" value="submit">Save settings</button>
         </div>
       </form>
     </dialog>

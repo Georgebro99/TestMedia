@@ -4,13 +4,13 @@ Ripplegram is a polished Instagram-style social media prototype built with plain
 
 ## Features
 
-- Clean three-column desktop shell with mobile bottom navigation
+- Top-left quick create button (plus) with modal post composer
+- Profile stats with clickable Followers and Following lists
+- Settings panel for dark mode, compact feed, privacy, status visibility, reel autoplay, and accent theme
 - Story strip, image-first home feed, and smooth view transitions
 - Explore search grid and reel-style discovery stream
-- Real profile views with stats and post grids
+- Real profile views with editable profile details
 - Working comments, likes, saves, follows, and DMs
-- Create-post and edit-profile dialogs
-- Subtle interaction animations and toast feedback
 - Persistent browser state via `localStorage`
 
 ## Run
