@@ -16,8 +16,8 @@ body {
 }
 
 .app-shell {
-  width: min(1280px, 96vw);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   display: grid;
   grid-template-columns: 84px minmax(480px, 1fr) 300px;
   gap: 1.25rem;
@@ -29,6 +29,7 @@ body {
   min-height: 100vh;
   position: sticky;
   top: 0;
+  left: 0;
   transition: width 0.2s ease;
 }
 
@@ -43,7 +44,6 @@ body {
 }
 
 .sidebar:hover .logo { opacity: 1; }
-
 .main-nav { display: grid; gap: 0.2rem; }
 
 .nav-btn {
@@ -63,16 +63,21 @@ body {
 .nav-btn .label { display: none; }
 .sidebar:hover .nav-btn .label { display: inline; }
 .nav-btn .icon { width: 22px; text-align: center; }
-
 .nav-btn:hover,
 .nav-btn.active { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 
-.content { padding: 1.2rem 0; }
+.content { padding: 1.2rem 0; max-width: 740px; }
 .top-actions {
   display: grid;
-  grid-template-columns: 42px 1fr 42px;
+  grid-template-columns: 42px 1fr auto;
   align-items: center;
   margin-bottom: 0.8rem;
+  gap: 0.5rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.4rem;
 }
 
 .icon-btn {
@@ -126,6 +131,7 @@ body {
 .avatar.big { width: 70px; height: 70px; }
 
 .feed { display: grid; gap: 1rem; }
+body.compact .feed { gap: 0.6rem; }
 
 .post {
   border: 1px solid var(--border);
@@ -133,7 +139,6 @@ body {
   background: var(--card);
   overflow: hidden;
 }
-
 .post header {
   display: flex;
   justify-content: space-between;
@@ -160,16 +165,8 @@ body {
   font-size: 0.81rem;
 }
 
-.image-wrap {
-  position: relative;
-}
-
-.post-image {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-}
-
+.image-wrap { position: relative; }
+.post-image { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
 .like-burst {
   position: absolute;
   left: 50%;
@@ -179,22 +176,10 @@ body {
   opacity: 0;
   pointer-events: none;
 }
+.like-burst.show { animation: likeBurst 560ms ease; }
 
-.like-burst.show {
-  animation: likeBurst 560ms ease;
-}
-
-.post-caption {
-  margin: 0;
-  padding: 0.8rem 0.85rem 0.2rem;
-  line-height: 1.38;
-}
-
-.post footer {
-  display: flex;
-  gap: 0.45rem;
-  padding: 0.55rem 0.85rem 0.8rem;
-}
+.post-caption { margin: 0; padding: 0.8rem 0.85rem 0.2rem; line-height: 1.38; }
+.post footer { display: flex; gap: 0.45rem; padding: 0.55rem 0.85rem 0.8rem; }
 
 .post footer button,
 .primary,
@@ -218,15 +203,10 @@ body {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: color-mix(in srgb, var(--accent) 10%, var(--card));
 }
-
 .post footer button.pulse { animation: pulse 240ms ease; }
 .count-bounce { display: inline-block; animation: countBounce 320ms ease; }
 
-.comment-form {
-  display: flex;
-  gap: 0.45rem;
-  padding: 0 0.85rem 0.85rem;
-}
+.comment-form { display: flex; gap: 0.45rem; padding: 0 0.85rem 0.85rem; }
 
 .comment-form input,
 .search-input,
@@ -242,71 +222,28 @@ body {
   color: var(--text);
 }
 
-.comments {
-  list-style: none;
-  margin: 0;
-  padding: 0 0.85rem 0.75rem;
-  display: grid;
-  gap: 0.28rem;
-  font-size: 0.92rem;
-}
-
+.comments { list-style: none; margin: 0; padding: 0 0.85rem 0.75rem; display: grid; gap: 0.28rem; font-size: 0.92rem; }
 .hidden { display: none; }
 
-.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-}
+.primary { background: var(--accent); border-color: var(--accent); color: white; }
 
-.right-rail { padding: 1.2rem 0; }
-.mini-profile {
-  display: flex;
-  gap: 0.65rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.suggestions {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.52rem;
-}
-
-.suggestions li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.right-rail { padding: 1.2rem 1rem 1.2rem 0; }
+.mini-profile { display: flex; gap: 0.65rem; align-items: center; margin-bottom: 1rem; }
+.suggestions { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.52rem; }
+.suggestions li { display: flex; justify-content: space-between; align-items: center; }
 
 .search-input { margin-bottom: 0.85rem; }
 .search-grid,
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.3rem;
-}
+.profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; }
 
 .grid-post { border: 0; padding: 0; cursor: pointer; background: transparent; }
 .grid-post img,
-.profile-grid img {
-  width: 100%;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-}
+.profile-grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
 
 .messages-layout { display: none; grid-template-columns: 230px 1fr; gap: 0.75rem; }
 .messages-layout.active-view { display: grid; }
-
 .threads,
-.chat-box {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 0.72rem;
-}
+.chat-box { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 0.72rem; }
 
 .thread {
   border: 0;
@@ -323,23 +260,10 @@ body {
 .thread.active,
 .thread:hover { background: color-mix(in srgb, var(--accent) 13%, transparent); }
 
-.chat-messages {
-  min-height: 280px;
-  max-height: 420px;
-  overflow: auto;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.msg {
-  width: fit-content;
-  max-width: 80%;
-  padding: 0.45rem 0.62rem;
-  border-radius: 11px;
-}
+.chat-messages { min-height: 280px; max-height: 420px; overflow: auto; display: grid; gap: 0.35rem; }
+.msg { width: fit-content; max-width: 80%; padding: 0.45rem 0.62rem; border-radius: 11px; }
 .msg.mine { justify-self: end; background: color-mix(in srgb, var(--accent) 20%, var(--card)); }
 .msg.theirs { background: color-mix(in srgb, var(--muted) 18%, var(--card)); }
-
 .chat-form { margin-top: 0.65rem; display: flex; gap: 0.45rem; }
 
 .profile-header {
@@ -352,26 +276,11 @@ body {
   align-items: center;
   margin-bottom: 0.7rem;
 }
-
 .profile-header p { margin: 0.25rem 0; color: var(--muted); }
 .stats { display: flex; gap: 0.8rem; font-size: 0.92rem; align-items: center; }
-.link-stat {
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-  padding: 0;
-  font: inherit;
-}
+.link-stat { border: 0; background: transparent; color: var(--text); cursor: pointer; padding: 0; font: inherit; }
 .link-stat:hover { color: var(--accent); }
-
-.profile-tabs {
-  text-transform: uppercase;
-  color: var(--muted);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.45rem;
-}
+.profile-tabs { text-transform: uppercase; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.08em; margin-bottom: 0.45rem; }
 
 dialog { border: 0; background: transparent; }
 .dialog-card {
@@ -385,19 +294,10 @@ dialog { border: 0; background: transparent; }
 }
 .dialog-actions { display: flex; justify-content: end; gap: 0.5rem; }
 .file-label { display: grid; gap: 0.35rem; color: var(--muted); font-size: 0.92rem; }
+.setting { display: flex; align-items: center; justify-content: space-between; }
 
-.connections-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.55rem;
-}
-.connections-list li {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-}
+.connections-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.connections-list li { display: flex; gap: 0.6rem; align-items: center; }
 
 .toast {
   position: fixed;
@@ -411,29 +311,16 @@ dialog { border: 0; background: transparent; }
   opacity: 0;
   transition: 180ms ease;
 }
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-@keyframes pulse {
-  50% { transform: scale(1.08); }
-}
-
-@keyframes countBounce {
-  50% { transform: translateY(-3px) scale(1.15); }
-}
-
+@keyframes pulse { 50% { transform: scale(1.08); } }
+@keyframes countBounce { 50% { transform: translateY(-3px) scale(1.15); } }
 @keyframes likeBurst {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
   35% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
 }
-
-@keyframes fade {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 1080px) {
   .app-shell { grid-template-columns: 74px 1fr; }
@@ -463,5 +350,6 @@ dialog { border: 0; background: transparent; }
   .main-nav { grid-template-columns: repeat(4, 1fr); }
   .nav-btn { justify-content: center; }
   .nav-btn .label { display: none !important; }
-  .content { padding-bottom: 5.5rem; }
+  .content { padding: 0.7rem 0.8rem 5.5rem; }
+  .top-actions { margin-bottom: 0.5rem; }
 }

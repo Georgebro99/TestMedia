@@ -1,4 +1,4 @@
-const STORAGE_KEY = "ripplegram-v4";
+const STORAGE_KEY = "ripplegram-v5";
 
 const directory = {
   alexm: { name: "Alex Moore", handle: "alexm", bio: "Street photos + coffee.", avatar: "A" },
@@ -74,6 +74,14 @@ const profileHandleInput = document.getElementById("profileHandleInput");
 const profileBioInput = document.getElementById("profileBioInput");
 const editProfileBtn = document.getElementById("editProfileBtn");
 
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsDialog = document.getElementById("settingsDialog");
+const settingsForm = document.getElementById("settingsForm");
+const setCompactFeed = document.getElementById("setCompactFeed");
+const setActivityStatus = document.getElementById("setActivityStatus");
+const setBurstAnimation = document.getElementById("setBurstAnimation");
+const setPrivateAccount = document.getElementById("setPrivateAccount");
+
 const connectionsDialog = document.getElementById("connectionsDialog");
 const connectionsTitle = document.getElementById("connectionsTitle");
 const connectionsList = document.getElementById("connectionsList");
@@ -99,11 +107,25 @@ function loadState() {
         { fromMe: true, text: "Ready when you are." },
       ],
     },
+    settings: {
+      compactFeed: false,
+      showActivityStatus: true,
+      likeBurstAnimation: true,
+      privateAccount: false,
+    },
   };
 }
 
 function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function applySettings() {
+  document.body.classList.toggle("compact", state.settings.compactFeed);
+  setCompactFeed.checked = state.settings.compactFeed;
+  setActivityStatus.checked = state.settings.showActivityStatus;
+  setBurstAnimation.checked = state.settings.likeBurstAnimation;
+  setPrivateAccount.checked = state.settings.privateAccount;
 }
 
 function getUser(handle) {
@@ -221,7 +243,7 @@ function renderProfile() {
     <div class='avatar big'>${u.avatar}</div>
     <div>
       <h2>${u.name}</h2>
-      <p>@${u.handle} · active now</p>
+      <p>@${u.handle}${state.settings.showActivityStatus ? " · active now" : ""}</p>
       <p>${u.bio || "No bio."}</p>
       <div class='stats'>
         <span><strong>${posts.length}</strong> posts</span>
@@ -277,6 +299,7 @@ function renderConnectionsDialog() {
 
 function refreshCore() {
   persist();
+  applySettings();
   renderStories();
   renderFeed();
   renderSearch(searchInput.value);
@@ -306,7 +329,7 @@ function togglePostAction(post, type, button, postNode) {
     button?.querySelector("span")?.classList.remove("count-bounce");
   }, 320);
 
-  if (type === "like" && !had && postNode) {
+  if (type === "like" && !had && postNode && state.settings.likeBurstAnimation) {
     const burst = postNode.querySelector(".like-burst");
     burst?.classList.remove("show");
     requestAnimationFrame(() => burst?.classList.add("show"));
@@ -322,6 +345,7 @@ mainNav.addEventListener("click", (event) => {
 });
 
 newPostBtn.addEventListener("click", () => createDialog.showModal());
+settingsBtn.addEventListener("click", () => settingsDialog.showModal());
 editProfileBtn.addEventListener("click", () => {
   profileNameInput.value = state.user.name;
   profileHandleInput.value = state.user.handle;
@@ -482,6 +506,26 @@ profileForm.addEventListener("submit", (event) => {
   showToast("Profile saved");
 });
 
+settingsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (event.submitter?.value === "cancel") {
+    settingsDialog.close();
+    return;
+  }
+
+  state.settings = {
+    compactFeed: setCompactFeed.checked,
+    showActivityStatus: setActivityStatus.checked,
+    likeBurstAnimation: setBurstAnimation.checked,
+    privateAccount: setPrivateAccount.checked,
+  };
+
+  settingsDialog.close();
+  refreshCore();
+  showToast("Settings updated");
+});
+
 document.addEventListener("click", (event) => {
   const followBtn = event.target.closest("#followProfileBtn");
   if (followBtn && !state.follows.includes(viewingProfile)) {
@@ -495,6 +539,14 @@ document.addEventListener("click", (event) => {
     activeConnectionsMode = statBtn.dataset.openConnections;
     renderConnectionsDialog();
     connectionsDialog.showModal();
+    return;
+  }
+
+  if (event.target.closest("#openProfileEdit")) {
+    profileNameInput.value = state.user.name;
+    profileHandleInput.value = state.user.handle;
+    profileBioInput.value = state.user.bio;
+    profileDialog.showModal();
   }
 });
 
