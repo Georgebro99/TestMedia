@@ -1,24 +1,23 @@
-# TestMedia (Ripple)
+# TestMedia (Ripplegram)
 
-Ripple is a realistic social-media prototype built with plain HTML, CSS, and JavaScript.
+Ripplegram is an Instagram-inspired social media prototype built with plain HTML, CSS, and JavaScript.
 
 ## Features
 
-- Distinct app screens: Home, Explore, Activity, Messages, and Profile
-- Clickable profile names that open actual profile views with posts
-- Timeline with post creation, comments, likes, reposts, and bookmarks
-- Explore grid for media discovery with modal preview
-- Activity feed showing your recent post/interactions
+- Instagram-like app shell with left navigation and feed-centered layout
+- Story row, visual post cards, and double-click-to-like behavior
+- Search/Explore grid for image discovery
+- Reels-style media stream with overlay captions
+- DMs layout with thread list and chat pane
+- Profile page with stats and post grid
+- Create-post and edit-profile dialogs
 - Follow suggestions and follow actions
-- Messaging thread with local persistence and quick simulated replies
-- Interaction polish: animated reactions, screen transitions, and toast feedback
-- Persistent single-user state via `localStorage`
+- Animated UI feedback for reactions, transitions, and toasts
+- Persistent local state using `localStorage`
 
 ## Run
 
-Open `index.html` in any modern browser.
-
-For a quick local server:
+Open `index.html` directly in a browser, or run:
 
 ```bash
 python3 -m http.server 8000

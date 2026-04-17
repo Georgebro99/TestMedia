@@ -1,516 +1,468 @@
-const STORAGE_KEY = "ripple-state-v3";
+const STORAGE_KEY = "ripplegram-v1";
 
-const userDirectory = {
-  jordanlake: { displayName: "Jordan Lake", username: "jordanlake", bio: "Runner, coffee fan, and chasing tiny daily improvements." },
-  ninapatel: { displayName: "Nina Patel", username: "ninapatel", bio: "Distance running, design systems, and sunlight." },
-  damoncodes: { displayName: "Damon R.", username: "damoncodes", bio: "Building tiny apps and shipping weekly." },
+const directory = {
+  alexm: { name: "Alex Moore", handle: "alexm", bio: "Street photos + coffee.", avatar: "A" },
+  linafit: { name: "Lina Park", handle: "linafit", bio: "Training + routines.", avatar: "L" },
+  devsam: { name: "Sam Reed", handle: "devsam", bio: "Building in public.", avatar: "S" },
 };
 
-const seedPosts = [
+const seededPosts = [
   {
     id: crypto.randomUUID(),
-    author: "ninapatel",
-    text: "Morning run complete. 5 miles before work and now feeling unstoppable. #MorningRun",
-    imageUrl: "",
-    createdAt: Date.now() - 1000 * 60 * 38,
-    likes: 18,
-    reposts: 3,
-    bookmarks: 5,
-    comments: [{ id: crypto.randomUUID(), author: "@jordanlake", text: "That pace is unreal 👏" }],
+    author: "alexm",
+    caption: "Sunset in the city. #streetphoto",
+    image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80",
+    createdAt: Date.now() - 1000 * 60 * 26,
+    likes: 321,
+    bookmarks: 48,
+    comments: [{ id: crypto.randomUUID(), by: "@linafit", text: "That sky is unreal." }],
   },
   {
     id: crypto.randomUUID(),
-    author: "damoncodes",
-    text: "Built a tiny side project this weekend and shipped it before overthinking it. Highly recommend. #WeekendBuild",
-    imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-    createdAt: Date.now() - 1000 * 60 * 120,
-    likes: 42,
-    reposts: 9,
-    bookmarks: 12,
+    author: "linafit",
+    caption: "Quick core circuit between meetings 💪 #fitness",
+    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
+    createdAt: Date.now() - 1000 * 60 * 90,
+    likes: 198,
+    bookmarks: 29,
+    comments: [],
+  },
+  {
+    id: crypto.randomUUID(),
+    author: "devsam",
+    caption: "Late night shipping session. #buildinpublic",
+    image: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80",
+    createdAt: Date.now() - 1000 * 60 * 180,
+    likes: 144,
+    bookmarks: 17,
     comments: [],
   },
 ];
 
-const seedMessages = [
-  { id: crypto.randomUUID(), fromMe: false, author: "@ninapatel", text: "Anyone up for a 6AM run tomorrow?" },
-  { id: crypto.randomUUID(), fromMe: true, author: "@jordanlake", text: "I can do 6:30, count me in." },
-];
+const seededMessages = {
+  alexm: [
+    { fromMe: false, text: "New post soon 👀" },
+    { fromMe: true, text: "Drop it, I’m ready." },
+  ],
+};
 
 let state = loadState();
-let activeProfile = state.user.username;
+let currentView = "home";
+let currentThread = "alexm";
+let viewingProfile = state.user.handle;
 
-const screenRoot = document.getElementById("screenRoot");
-const feedEl = document.getElementById("feed");
-const exploreGrid = document.getElementById("exploreGrid");
-const activityList = document.getElementById("activityList");
-const profileFeed = document.getElementById("profileFeed");
-const profileHeader = document.getElementById("profileHeader");
-const viewSubtitle = document.getElementById("viewSubtitle");
-const postForm = document.getElementById("postForm");
-const postText = document.getElementById("postText");
-const imageUrl = document.getElementById("imageUrl");
-const charCount = document.getElementById("charCount");
-const trendingList = document.getElementById("trendingList");
-const suggestionList = document.getElementById("suggestionList");
-const profileCard = document.getElementById("profileCard");
-const postTemplate = document.getElementById("postTemplate");
-const navList = document.getElementById("navList");
+const mainNav = document.getElementById("mainNav");
 const toast = document.getElementById("toast");
+const postTemplate = document.getElementById("postTemplate");
 
-const mediaDialog = document.getElementById("mediaDialog");
-const mediaPreview = document.getElementById("mediaPreview");
-const mediaCaption = document.getElementById("mediaCaption");
-const closeMedia = document.getElementById("closeMedia");
+const storiesEl = document.getElementById("stories");
+const feedEl = document.getElementById("feed");
+const searchInput = document.getElementById("searchInput");
+const searchGrid = document.getElementById("searchGrid");
+const reelsList = document.getElementById("reelsList");
+const profileGrid = document.getElementById("profileGrid");
+const profileHeader = document.getElementById("profileHeader");
 
-const messagesThread = document.getElementById("messagesThread");
-const messageForm = document.getElementById("messageForm");
-const messageInput = document.getElementById("messageInput");
+const threadList = document.getElementById("threadList");
+const chatMessages = document.getElementById("chatMessages");
+const chatForm = document.getElementById("chatForm");
+const chatInput = document.getElementById("chatInput");
 
-const authDialog = document.getElementById("authDialog");
-const authToggle = document.getElementById("authToggle");
-const authForm = document.getElementById("authForm");
-const displayName = document.getElementById("displayName");
-const username = document.getElementById("username");
-const bio = document.getElementById("bio");
+const miniProfile = document.getElementById("miniProfile");
+const suggestions = document.getElementById("suggestions");
+
+const createDialog = document.getElementById("createDialog");
+const createForm = document.getElementById("createForm");
+const createText = document.getElementById("createText");
+const createImage = document.getElementById("createImage");
+const newPostBtn = document.getElementById("newPostBtn");
+
+const profileDialog = document.getElementById("profileDialog");
+const profileForm = document.getElementById("profileForm");
+const profileNameInput = document.getElementById("profileNameInput");
+const profileHandleInput = document.getElementById("profileHandleInput");
+const profileBioInput = document.getElementById("profileBioInput");
+const editProfileBtn = document.getElementById("editProfileBtn");
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return { user: userDirectory.jordanlake, posts: seedPosts, interactions: {}, messages: seedMessages, follows: ["ninapatel"] };
-    }
-    return JSON.parse(raw);
-  } catch {
-    return { user: userDirectory.jordanlake, posts: seedPosts, interactions: {}, messages: seedMessages, follows: ["ninapatel"] };
-  }
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return {
+    user: { name: "Jordan Lake", handle: "jordanlake", bio: "Daily life and small wins.", avatar: "J" },
+    posts: seededPosts,
+    interactions: {},
+    follows: ["alexm", "linafit"],
+    messages: seededMessages,
+  };
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function formatTime(ts) {
-  const minutes = Math.floor((Date.now() - ts) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
+function getUser(handle) {
+  if (handle === state.user.handle) return state.user;
+  return directory[handle] || { name: handle, handle, bio: "", avatar: handle[0].toUpperCase() };
+}
+
+function timeAgo(ts) {
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
-  return new Date(ts).toLocaleDateString();
+  return `${Math.floor(hours / 24)}d`;
 }
 
-function getUser(usernameKey) {
-  if (usernameKey === state.user.username) return state.user;
-  return userDirectory[usernameKey] || { displayName: usernameKey, username: usernameKey, bio: "" };
-}
-
-function showToast(text) {
-  toast.textContent = text;
+function showToast(msg) {
+  toast.textContent = msg;
   toast.classList.add("show");
-  clearTimeout(showToast.timeout);
-  showToast.timeout = setTimeout(() => toast.classList.remove("show"), 1500);
+  clearTimeout(showToast.t);
+  showToast.t = setTimeout(() => toast.classList.remove("show"), 1400);
 }
 
-function extractTrends(posts) {
-  const hashtagCount = {};
-  posts.forEach((post) => {
-    const tags = post.text.match(/#[a-zA-Z0-9_]+/g) || [];
-    tags.forEach((tag) => {
-      hashtagCount[tag] = (hashtagCount[tag] || 0) + 1;
-    });
-  });
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active-view"));
+  document.getElementById(`${view}View`).classList.add("active-view");
 
-  return Object.entries(hashtagCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  document.querySelectorAll(".nav-btn[data-view]").forEach((b) => b.classList.remove("active"));
+  const active = document.querySelector(`.nav-btn[data-view="${view}"]`);
+  if (active) active.classList.add("active");
 }
 
-function renderProfileCard() {
-  profileCard.innerHTML = `<strong>${state.user.displayName}</strong><p>@${state.user.username}</p><small>${state.user.bio || "No bio yet."}</small>`;
-  authToggle.textContent = `@${state.user.username}`;
-  displayName.value = state.user.displayName;
-  username.value = state.user.username;
-  bio.value = state.user.bio || "";
+function postScore(post) {
+  return post.likes + post.bookmarks + post.comments.length * 2;
 }
 
-function renderTrends() {
-  const trends = extractTrends(state.posts);
-  trendingList.innerHTML = "";
-
-  trends.forEach(([tag, count]) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${tag}</strong><br /><small>${count} posts in the last day</small>`;
-    trendingList.append(li);
-  });
-
-  if (!trends.length) {
-    trendingList.innerHTML = "<li><small>No trends yet.</small></li>";
-  }
-}
-
-function renderSuggestions() {
-  const suggested = Object.values(userDirectory).filter((user) => user.username !== state.user.username && !state.follows.includes(user.username));
-  suggestionList.innerHTML = "";
-
-  if (!suggested.length) {
-    suggestionList.innerHTML = "<li><small>You're all caught up.</small></li>";
-    return;
-  }
-
-  suggested.forEach((user) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${user.displayName}</strong><br /><small>@${user.username}</small><button class="btn ghost follow-btn" data-follow="${user.username}">Follow</button>`;
-    suggestionList.append(li);
-  });
-}
-
-function hydratePostNode(node, post, options = {}) {
+function hydratePost(node, post) {
   const author = getUser(post.author);
-  node.dataset.id = post.id;
-  node.dataset.author = author.username;
+  node.dataset.postId = post.id;
+  node.dataset.author = post.author;
 
-  node.querySelector(".post-name").textContent = author.displayName;
-  node.querySelector(".post-handle").textContent = `@${author.username}`;
-  node.querySelector(".post-time").textContent = formatTime(post.createdAt);
-  node.querySelector(".post-text").textContent = post.text;
+  node.querySelector(".author-name").textContent = author.name;
+  node.querySelector(".author-handle").textContent = `@${author.handle}`;
+  node.querySelector(".post-time").textContent = timeAgo(post.createdAt);
+  node.querySelector(".post-caption").textContent = post.caption;
+
+  const avatar = node.querySelector(".avatar");
+  avatar.textContent = author.avatar;
 
   const image = node.querySelector(".post-image");
-  if (post.imageUrl) {
-    image.src = post.imageUrl;
-    image.style.display = "block";
-    image.classList.add("clickable-media");
-  }
-
-  const values = { like: post.likes, repost: post.reposts, bookmark: post.bookmarks, comment: post.comments.length };
-
-  ["like", "repost", "bookmark", "comment"].forEach((action) => {
-    const button = node.querySelector(`button[data-action="${action}"]`);
-    button.querySelector("span").textContent = values[action];
-    if (state.interactions[post.id]?.includes(action)) button.classList.add("active");
-
-    if (options.readOnly && action !== "comment") {
-      button.classList.add("is-disabled");
-      button.disabled = true;
-    }
+  image.src = post.image;
+  image.addEventListener("dblclick", () => {
+    toggleInteraction(post, "like", node.querySelector('button[data-action="like"]'));
+    persistAndRender();
   });
 
-  const commentList = node.querySelector(".comment-list");
-  post.comments.forEach((comment) => {
+  const counts = {
+    like: post.likes,
+    comment: post.comments.length,
+    bookmark: post.bookmarks,
+  };
+
+  Object.keys(counts).forEach((type) => {
+    const btn = node.querySelector(`button[data-action="${type}"]`);
+    btn.querySelector("span").textContent = counts[type];
+    if (state.interactions[post.id]?.includes(type)) btn.classList.add("active");
+  });
+
+  const comments = node.querySelector(".comments");
+  post.comments.forEach((c) => {
     const li = document.createElement("li");
-    li.innerHTML = `<strong>${comment.author}</strong><br />${comment.text}`;
-    commentList.append(li);
+    li.innerHTML = `<strong>${c.by}</strong> ${c.text}`;
+    comments.append(li);
   });
 }
 
-function renderFeedList(container, posts, options = {}) {
-  container.innerHTML = "";
-  if (!posts.length) {
-    container.innerHTML = `<p class="empty">${options.emptyText || "No posts yet."}</p>`;
-    return;
-  }
-
-  posts.forEach((post) => {
-    const node = postTemplate.content.firstElementChild.cloneNode(true);
-    hydratePostNode(node, post, options);
-    container.append(node);
-  });
+function renderStories() {
+  const people = [state.user.handle, ...state.follows];
+  storiesEl.innerHTML = people
+    .map((handle) => {
+      const user = getUser(handle);
+      return `<button class="story" data-profile="${user.handle}"><div class="avatar">${user.avatar}</div><small>${user.handle}</small></button>`;
+    })
+    .join("");
 }
 
-function renderExploreGrid() {
-  const posts = state.posts.slice().sort((a, b) => b.likes + b.reposts - (a.likes + a.reposts));
-  exploreGrid.innerHTML = "";
-
-  posts.forEach((post) => {
-    const tile = document.createElement("button");
-    tile.className = "explore-tile";
-    tile.dataset.postId = post.id;
-    const author = getUser(post.author);
-
-    if (post.imageUrl) {
-      tile.innerHTML = `<img src="${post.imageUrl}" alt="${author.displayName} post" /><span>@${author.username}</span>`;
-    } else {
-      tile.innerHTML = `<div class="text-tile"><p>${post.text.slice(0, 80)}</p><span>@${author.username}</span></div>`;
-    }
-    exploreGrid.append(tile);
-  });
-}
-
-function renderActivity() {
-  const recent = state.posts
-    .filter((post) => post.author === state.user.username || state.interactions[post.id]?.length)
+function renderFeed() {
+  feedEl.innerHTML = "";
+  state.posts
     .slice()
     .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 8);
-
-  activityList.innerHTML = "";
-  if (!recent.length) {
-    activityList.innerHTML = "<li class='empty'>Your activity appears here.</li>";
-    return;
-  }
-
-  recent.forEach((post) => {
-    const li = document.createElement("li");
-    const reacted = state.interactions[post.id] || [];
-    const activityText = reacted.length ? `You interacted (${reacted.join(", ")})` : "You posted";
-    li.innerHTML = `<strong>${activityText}</strong><small>${formatTime(post.createdAt)}</small><p>${post.text.slice(0, 90)}</p>`;
-    activityList.append(li);
-  });
+    .forEach((post) => {
+      const node = postTemplate.content.firstElementChild.cloneNode(true);
+      hydratePost(node, post);
+      feedEl.append(node);
+    });
 }
 
-function renderProfilePanel() {
-  const user = getUser(activeProfile);
-  const posts = state.posts.filter((post) => post.author === user.username).sort((a, b) => b.createdAt - a.createdAt);
-  const followers = state.follows.includes(user.username) ? 1 : 0;
-  const isMe = user.username === state.user.username;
+function renderSearch(query = "") {
+  const q = query.trim().toLowerCase();
+  const filtered = state.posts
+    .filter((p) => {
+      const user = getUser(p.author);
+      return !q || p.caption.toLowerCase().includes(q) || user.handle.includes(q);
+    })
+    .sort((a, b) => postScore(b) - postScore(a));
+
+  searchGrid.innerHTML = filtered
+    .map((p) => `<button class="grid-post" data-post="${p.id}"><img src="${p.image}" alt="Search result" /></button>`)
+    .join("");
+}
+
+function renderReels() {
+  const posts = state.posts.slice().sort((a, b) => postScore(b) - postScore(a)).slice(0, 5);
+  reelsList.innerHTML = posts
+    .map((p) => {
+      const u = getUser(p.author);
+      return `<article class="reel"><img src="${p.image}" alt="Reel" /><div class="overlay"><strong>@${u.handle}</strong><p>${p.caption}</p></div></article>`;
+    })
+    .join("");
+}
+
+function renderProfile() {
+  const user = getUser(viewingProfile);
+  const posts = state.posts.filter((p) => p.author === user.handle);
+  const isMe = user.handle === state.user.handle;
+  const following = state.follows.includes(user.handle);
 
   profileHeader.innerHTML = `
+    <div class="avatar big">${user.avatar}</div>
     <div>
-      <h2>${user.displayName}</h2>
-      <p>@${user.username}</p>
-      <small>${user.bio || "No bio yet."}</small>
-    </div>
-    <div class="profile-meta">
-      <span><strong>${posts.length}</strong> posts</span>
-      <span><strong>${followers}</strong> following</span>
-      ${isMe ? "" : `<button class='btn ghost' id='profileFollowBtn'>${state.follows.includes(user.username) ? "Following" : "Follow"}</button>`}
+      <h2>${user.name}</h2>
+      <p>@${user.handle}</p>
+      <p>${user.bio || "No bio."}</p>
+      <div class="stats"><span><strong>${posts.length}</strong> posts</span><span><strong>${state.follows.length}</strong> following</span></div>
+      ${isMe ? "" : `<button class="primary" id="followProfileBtn">${following ? "Following" : "Follow"}</button>`}
     </div>
   `;
 
-  renderFeedList(profileFeed, posts, { emptyText: "No posts from this profile yet." });
+  profileGrid.innerHTML = posts.map((p) => `<img src="${p.image}" alt="Profile post" />`).join("");
 }
 
-function renderMessages() {
-  messagesThread.innerHTML = "";
-  state.messages.forEach((message) => {
-    const msg = document.createElement("article");
-    msg.className = `msg ${message.fromMe ? "from-me" : "from-them"}`;
-    msg.innerHTML = `<small>${message.author}</small><p>${message.text}</p>`;
-    messagesThread.append(msg);
-  });
-  messagesThread.scrollTop = messagesThread.scrollHeight;
+function renderThreads() {
+  const people = Object.keys(state.messages);
+  threadList.innerHTML = people
+    .map((handle) => {
+      const user = getUser(handle);
+      const active = handle === currentThread ? "thread active" : "thread";
+      return `<button class="${active}" data-thread="${handle}"><div class="avatar tiny">${user.avatar}</div><span>${user.name}</span></button>`;
+    })
+    .join("");
+
+  renderChat();
 }
 
-function renderHomeFeed() {
-  renderFeedList(feedEl, state.posts.slice().sort((a, b) => b.createdAt - a.createdAt));
+function renderChat() {
+  const messages = state.messages[currentThread] || [];
+  chatMessages.innerHTML = messages
+    .map((m) => `<p class="msg ${m.fromMe ? "mine" : "theirs"}">${m.text}</p>`)
+    .join("");
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function renderAll() {
-  renderProfileCard();
-  renderHomeFeed();
-  renderExploreGrid();
-  renderActivity();
-  renderProfilePanel();
-  renderMessages();
-  renderTrends();
-  renderSuggestions();
+function renderRail() {
+  miniProfile.innerHTML = `<div class="avatar">${state.user.avatar}</div><div><strong>${state.user.name}</strong><small>@${state.user.handle}</small></div>`;
+
+  const suggested = Object.values(directory).filter((u) => !state.follows.includes(u.handle) && u.handle !== state.user.handle);
+  suggestions.innerHTML = suggested
+    .map((u) => `<li><span>@${u.handle}</span><button class="ghost" data-follow="${u.handle}">Follow</button></li>`)
+    .join("");
 }
 
-function switchTab(tab) {
-  document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active-panel"));
-  document.querySelectorAll(".nav-list li").forEach((item) => item.classList.remove("active"));
-  document.getElementById(`${tab}Panel`).classList.add("active-panel");
-  document.querySelector(`.nav-list li[data-tab="${tab}"]`).classList.add("active");
-
-  const labels = {
-    home: "Home feed",
-    explore: "Explore creators",
-    activity: "Your activity",
-    messages: "Direct messages",
-    profile: "Profile",
-  };
-  viewSubtitle.textContent = labels[tab];
-  screenRoot.classList.add("screen-shift");
-  setTimeout(() => screenRoot.classList.remove("screen-shift"), 220);
-}
-
-function toggleInteraction(post, action, button) {
+function toggleInteraction(post, type, button) {
   state.interactions[post.id] = state.interactions[post.id] || [];
-  const hadAction = state.interactions[post.id].includes(action);
-  const delta = hadAction ? -1 : 1;
+  const had = state.interactions[post.id].includes(type);
+  const delta = had ? -1 : 1;
 
-  if (action === "like") post.likes += delta;
-  if (action === "repost") post.reposts += delta;
-  if (action === "bookmark") post.bookmarks += delta;
+  if (type === "like") post.likes += delta;
+  if (type === "bookmark") post.bookmarks += delta;
 
-  if (hadAction) {
-    state.interactions[post.id] = state.interactions[post.id].filter((x) => x !== action);
+  if (had) {
+    state.interactions[post.id] = state.interactions[post.id].filter((x) => x !== type);
   } else {
-    state.interactions[post.id].push(action);
+    state.interactions[post.id].push(type);
   }
 
-  button.classList.add("spark");
-  setTimeout(() => button.classList.remove("spark"), 380);
-  const map = {
-    like: hadAction ? "Like removed" : "Post liked",
-    repost: hadAction ? "Repost removed" : "Post reposted",
-    bookmark: hadAction ? "Bookmark removed" : "Post saved",
-  };
-  showToast(map[action]);
+  if (button) {
+    button.classList.add("pulse");
+    setTimeout(() => button.classList.remove("pulse"), 320);
+  }
+  showToast(had ? `${type} removed` : `${type} added`);
 }
 
-postText.addEventListener("input", () => {
-  charCount.textContent = `${postText.value.length} / 280`;
+function persistAndRender() {
+  saveState();
+  renderStories();
+  renderFeed();
+  renderSearch(searchInput.value);
+  renderReels();
+  renderProfile();
+  renderThreads();
+  renderRail();
+}
+
+mainNav.addEventListener("click", (e) => {
+  const viewBtn = e.target.closest(".nav-btn[data-view]");
+  if (viewBtn) {
+    if (viewBtn.dataset.view === "profile") viewingProfile = state.user.handle;
+    switchView(viewBtn.dataset.view);
+    return;
+  }
+
+  if (e.target.closest("#newPostBtn")) {
+    createDialog.showModal();
+  }
 });
 
-postForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const text = postText.value.trim();
+feedEl.addEventListener("click", (e) => {
+  const actionBtn = e.target.closest("button[data-action]");
+  const postEl = e.target.closest(".post");
+  const post = state.posts.find((p) => p.id === postEl?.dataset.postId);
+
+  if (actionBtn && post) {
+    const action = actionBtn.dataset.action;
+    if (action === "comment") {
+      postEl.querySelector(".comment-form").classList.toggle("hidden");
+      return;
+    }
+    toggleInteraction(post, action, actionBtn);
+    persistAndRender();
+    return;
+  }
+
+  const authorBtn = e.target.closest("[data-action='open-profile']");
+  if (authorBtn && postEl) {
+    viewingProfile = postEl.dataset.author;
+    renderProfile();
+    switchView("profile");
+  }
+});
+
+feedEl.addEventListener("submit", (e) => {
+  if (!e.target.matches(".comment-form")) return;
+  e.preventDefault();
+
+  const form = e.target;
+  const postEl = form.closest(".post");
+  const post = state.posts.find((p) => p.id === postEl?.dataset.postId);
+  const input = form.querySelector("input");
+  const text = input.value.trim();
+  if (!post || !text) return;
+
+  post.comments.push({ id: crypto.randomUUID(), by: `@${state.user.handle}`, text });
+  input.value = "";
+  form.classList.add("hidden");
+  persistAndRender();
+  showToast("Comment posted");
+});
+
+storiesEl.addEventListener("click", (e) => {
+  const story = e.target.closest(".story");
+  if (!story) return;
+  viewingProfile = story.dataset.profile;
+  renderProfile();
+  switchView("profile");
+});
+
+searchInput.addEventListener("input", () => renderSearch(searchInput.value));
+
+searchGrid.addEventListener("click", (e) => {
+  const tile = e.target.closest(".grid-post");
+  if (!tile) return;
+  const post = state.posts.find((p) => p.id === tile.dataset.post);
+  if (!post) return;
+  viewingProfile = post.author;
+  renderProfile();
+  switchView("profile");
+});
+
+threadList.addEventListener("click", (e) => {
+  const thread = e.target.closest("[data-thread]");
+  if (!thread) return;
+  currentThread = thread.dataset.thread;
+  renderThreads();
+});
+
+chatForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = chatInput.value.trim();
   if (!text) return;
+
+  state.messages[currentThread] = state.messages[currentThread] || [];
+  state.messages[currentThread].push({ fromMe: true, text });
+  chatInput.value = "";
+  persistAndRender();
+
+  setTimeout(() => {
+    state.messages[currentThread].push({ fromMe: false, text: "Nice, sounds good 👌" });
+    persistAndRender();
+  }, 700);
+});
+
+suggestions.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-follow]");
+  if (!btn) return;
+  state.follows.push(btn.dataset.follow);
+  persistAndRender();
+  showToast(`Following @${btn.dataset.follow}`);
+});
+
+createForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const caption = createText.value.trim();
+  if (!caption) return;
 
   state.posts.unshift({
     id: crypto.randomUUID(),
-    author: state.user.username,
-    text,
-    imageUrl: imageUrl.value.trim(),
+    author: state.user.handle,
+    caption,
+    image:
+      createImage.value.trim() ||
+      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80",
     createdAt: Date.now(),
     likes: 0,
-    reposts: 0,
     bookmarks: 0,
     comments: [],
   });
 
-  postForm.reset();
-  charCount.textContent = "0 / 280";
-  saveState();
-  renderAll();
-  switchTab("home");
-  showToast("Posted successfully");
+  createForm.reset();
+  createDialog.close();
+  persistAndRender();
+  switchView("home");
+  showToast("Post shared");
 });
 
-screenRoot.addEventListener("click", (event) => {
-  const actionButton = event.target.closest("button[data-action]");
-  if (actionButton) {
-    const postNode = actionButton.closest(".post");
-    const post = state.posts.find((item) => item.id === postNode?.dataset.id);
-    if (!post) return;
-
-    const action = actionButton.dataset.action;
-    if (action === "comment") {
-      postNode.querySelector(".comment-form").classList.toggle("hidden");
-      return;
-    }
-
-    toggleInteraction(post, action, actionButton);
-    saveState();
-    renderAll();
-    return;
-  }
-
-  const profileBtn = event.target.closest("[data-action='open-profile']");
-  if (profileBtn) {
-    const post = profileBtn.closest(".post");
-    activeProfile = post.dataset.author;
-    renderProfilePanel();
-    switchTab("profile");
-    return;
-  }
-
-  const media = event.target.closest(".clickable-media");
-  if (media) {
-    const post = media.closest(".post");
-    const data = state.posts.find((item) => item.id === post.dataset.id);
-    mediaPreview.src = data.imageUrl;
-    mediaCaption.textContent = data.text;
-    mediaDialog.showModal();
-    return;
-  }
-
-  const exploreTile = event.target.closest(".explore-tile");
-  if (exploreTile) {
-    const data = state.posts.find((item) => item.id === exploreTile.dataset.postId);
-    if (!data) return;
-    if (data.imageUrl) {
-      mediaPreview.src = data.imageUrl;
-      mediaCaption.textContent = data.text;
-      mediaDialog.showModal();
-    } else {
-      showToast("No media on this post, open Home to read full text");
-    }
-  }
+editProfileBtn.addEventListener("click", () => {
+  profileNameInput.value = state.user.name;
+  profileHandleInput.value = state.user.handle;
+  profileBioInput.value = state.user.bio;
+  profileDialog.showModal();
 });
 
-screenRoot.addEventListener("submit", (event) => {
-  if (!event.target.matches(".comment-form")) return;
-  event.preventDefault();
-
-  const form = event.target;
-  const postNode = form.closest(".post");
-  const post = state.posts.find((item) => item.id === postNode?.dataset.id);
-  if (!post) return;
-
-  const input = form.querySelector("input");
-  const text = input.value.trim();
-  if (!text) return;
-
-  post.comments.push({ id: crypto.randomUUID(), author: `@${state.user.username}`, text });
-  saveState();
-  renderAll();
-  showToast("Reply posted");
-});
-
-navList.addEventListener("click", (event) => {
-  const item = event.target.closest("li[data-tab]");
-  if (!item) return;
-  if (item.dataset.tab === "profile") activeProfile = state.user.username;
-  switchTab(item.dataset.tab);
-});
-
-suggestionList.addEventListener("click", (event) => {
-  const btn = event.target.closest(".follow-btn");
-  if (!btn) return;
-  const person = btn.dataset.follow;
-  state.follows.push(person);
-  saveState();
-  renderSuggestions();
-  showToast(`Following @${person}`);
-});
-
-messageForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  state.messages.push({ id: crypto.randomUUID(), fromMe: true, author: `@${state.user.username}`, text });
-  messageInput.value = "";
-  saveState();
-  renderMessages();
-
-  setTimeout(() => {
-    state.messages.push({ id: crypto.randomUUID(), fromMe: false, author: "@ripple_friend", text: "Solid. I’ll ping you with details." });
-    saveState();
-    renderMessages();
-  }, 850);
-});
-
-authToggle.addEventListener("click", () => authDialog.showModal());
-
-closeMedia.addEventListener("click", () => mediaDialog.close());
-
-authForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const nextUsername = username.value.trim().replace(/^@/, "");
-
+profileForm.addEventListener("submit", (e) => {
+  e.preventDefault();
   state.user = {
-    displayName: displayName.value.trim(),
-    username: nextUsername,
-    bio: bio.value.trim(),
+    ...state.user,
+    name: profileNameInput.value.trim(),
+    handle: profileHandleInput.value.trim().replace(/^@/, ""),
+    bio: profileBioInput.value.trim(),
   };
-
-  userDirectory[nextUsername] = { ...state.user };
-  activeProfile = state.user.username;
-  saveState();
-  renderAll();
-  authDialog.close();
+  viewingProfile = state.user.handle;
+  profileDialog.close();
+  persistAndRender();
   showToast("Profile updated");
 });
 
-screenRoot.addEventListener("click", (event) => {
-  const followBtn = event.target.closest("#profileFollowBtn");
-  if (!followBtn) return;
-  if (!state.follows.includes(activeProfile)) {
-    state.follows.push(activeProfile);
-    saveState();
-    renderProfilePanel();
-    renderSuggestions();
-    showToast(`Following @${activeProfile}`);
-  }
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#followProfileBtn");
+  if (!btn) return;
+  if (!state.follows.includes(viewingProfile)) state.follows.push(viewingProfile);
+  persistAndRender();
 });
 
-renderAll();
+persistAndRender();
