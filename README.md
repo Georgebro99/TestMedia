@@ -1,19 +1,17 @@
 # TestMedia (Ripplegram)
 
-Ripplegram is an Instagram-inspired social media prototype built with plain HTML, CSS, and JavaScript.
+Ripplegram is a polished Instagram-style social media prototype built with plain HTML, CSS, and JavaScript.
 
 ## Features
 
-- Instagram-like app shell with left navigation and feed-centered layout
-- Story row, visual post cards, and double-click-to-like behavior
-- Search/Explore grid for image discovery
-- Reels-style media stream with overlay captions
-- DMs layout with thread list and chat pane
-- Profile page with stats and post grid
+- Clean three-column desktop shell with mobile bottom navigation
+- Story strip, image-first home feed, and smooth view transitions
+- Explore search grid and reel-style discovery stream
+- Real profile views with stats and post grids
+- Working comments, likes, saves, follows, and DMs
 - Create-post and edit-profile dialogs
-- Follow suggestions and follow actions
-- Animated UI feedback for reactions, transitions, and toasts
-- Persistent local state using `localStorage`
+- Subtle interaction animations and toast feedback
+- Persistent browser state via `localStorage`
 
 ## Run
 

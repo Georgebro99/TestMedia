@@ -11,12 +11,12 @@
       <aside class="sidebar">
         <h1 class="logo">Ripplegram</h1>
         <nav id="mainNav" class="main-nav">
-          <button class="nav-btn active" data-view="home">🏠 <span>Home</span></button>
-          <button class="nav-btn" data-view="search">🔎 <span>Search</span></button>
-          <button class="nav-btn" data-view="reels">🎬 <span>Reels</span></button>
-          <button class="nav-btn" data-view="messages">✉️ <span>Messages</span></button>
-          <button class="nav-btn" data-view="profile">👤 <span>Profile</span></button>
-          <button class="nav-btn" id="newPostBtn">➕ <span>Create</span></button>
+          <button class="nav-btn active" data-view="home"><span>Home</span></button>
+          <button class="nav-btn" data-view="search"><span>Search</span></button>
+          <button class="nav-btn" data-view="reels"><span>Reels</span></button>
+          <button class="nav-btn" data-view="messages"><span>Messages</span></button>
+          <button class="nav-btn" data-view="profile"><span>Profile</span></button>
+          <button class="nav-btn" id="newPostBtn"><span>Create</span></button>
         </nav>
         <button id="editProfileBtn" class="ghost full">Edit profile</button>
       </aside>
@@ -68,7 +68,7 @@
 
     <dialog id="createDialog">
       <form id="createForm" class="dialog-card" method="dialog">
-        <h2>Create new post</h2>
+        <h2>Create post</h2>
         <textarea id="createText" maxlength="280" placeholder="Write a caption..." required></textarea>
         <input id="createImage" type="url" placeholder="Image URL (optional)" />
         <div class="dialog-actions">
@@ -106,9 +106,9 @@
         <img class="post-image" alt="Post image" />
         <p class="post-caption"></p>
         <footer>
-          <button data-action="like">❤️ <span>0</span></button>
-          <button data-action="comment">💬 <span>0</span></button>
-          <button data-action="bookmark">🔖 <span>0</span></button>
+          <button data-action="like">Like <span>0</span></button>
+          <button data-action="comment">Comment <span>0</span></button>
+          <button data-action="bookmark">Save <span>0</span></button>
         </footer>
         <form class="comment-form hidden">
           <input maxlength="140" placeholder="Add a comment..." />
